@@ -61,9 +61,21 @@ for app in api frontend backend partner agent crm shortner remail; do
 done
 
 for helper in "${helpers[@]}"; do
-  grep -q "PLUGN_COOKIE_VALIDATION_KEY" "$helper"
+  if ! grep -q "PLUGN_COOKIE_VALIDATION_KEY" "$helper"; then
+    echo "Missing PLUGN_COOKIE_VALIDATION_KEY fallback in $helper." >&2
+    exit 1
+  fi
 done
 
-grep -q "PLUGN_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md
-grep -q "PLUGN_REMAIL_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md
-grep -q "tests/check-prod-cookie-validation-env.sh" PRODUCTION_READINESS.md
+if ! grep -q "PLUGN_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md; then
+  echo "PRODUCTION_READINESS.md must document PLUGN_COOKIE_VALIDATION_KEY." >&2
+  exit 1
+fi
+if ! grep -q "PLUGN_REMAIL_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md; then
+  echo "PRODUCTION_READINESS.md must document PLUGN_REMAIL_COOKIE_VALIDATION_KEY." >&2
+  exit 1
+fi
+if ! grep -q "tests/check-prod-cookie-validation-env.sh" PRODUCTION_READINESS.md; then
+  echo "PRODUCTION_READINESS.md must reference this validation script." >&2
+  exit 1
+fi

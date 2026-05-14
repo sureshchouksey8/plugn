@@ -1,6 +1,10 @@
 <?php
 
 $cookieValidationKey = require __DIR__ . '/../../common/config/cookie-validation-key.php';
+$redisPassword = getenv('PLUGN_REDIS_PASSWORD');
+if ($redisPassword === false || $redisPassword === '') {
+    throw new RuntimeException('Set PLUGN_REDIS_PASSWORD before booting the backend production app.');
+}
 
 return [
     'components' => [
@@ -22,7 +26,7 @@ return [
                 'class' => 'yii\redis\Connection',
                 'hostname' => 'redis-xkt_.railway.internal',
                 'username' => 'default',
-                'password' => 'BGtjhtRKQJvAirawTCZjYrjwRrQAGFBS',
+                'password' => $redisPassword,
                 'port' => 6379,
                 'database' => 0,
             ]
