@@ -1,4 +1,4 @@
-## Set up Docker Dev Environment -1
+## Set up Docker Dev Environment
 
 Build production images 
 
@@ -6,30 +6,30 @@ Build production images
 docker compose -f docker-compose-prod.yml up --force-recreate
 ```
 
-Step by step 
+### Local stack
 
-Run the following command after installing Docker
+Run the following command after installing Docker:
 
 ```bash
-docker-compose up
+docker compose -f docker-compose-local.yml -p plugn-local-server up --build
 ```
 
-This should set you up with the entire app along with MySQL and Redis. Use the following links to check it out:
+This should set you up with the entire app along with MySQL and Redis. The app waits for healthy MySQL and Redis containers before it starts, and the local service ports are bound to `127.0.0.1` so they are only reachable from the host machine. Use the following links to check it out:
 
-* [Backend on localhost:21080](http://localhost:21080)
-* [Frontend on localhost:22080](http://localhost:22080)
-* [Agent API on localhost:23080](http://localhost:23080)
-* [CRM API on localhost:23080](http://localhost:24080)
-* [API on localhost:21080](http://localhost:25080)
-* [Shortner on localhost:23080](http://localhost:26080)
-* [Partner on localhost:23080](http://localhost:27080)
-* [Phpmyadmin on localhost:8080](http://localhost:8080)
+* [Agent on localhost:8081](http://localhost:8081)
+* [API on localhost:8082](http://localhost:8082)
+* [Backend on localhost:8083](http://localhost:8083)
+* [CRM on localhost:8084](http://localhost:8084)
+* [Partner on localhost:8085](http://localhost:8085)
+* [Remail on localhost:8086](http://localhost:8086)
+* [Shortener on localhost:8087](http://localhost:8087)
+* [PhpMyAdmin on localhost:8088](http://localhost:8088)
 
 
 ## Accessing terminal in backend container
 
 ```bash
-docker-compose exec backend bash
+docker compose -f docker-compose-local.yml -p plugn-local-server exec app bash
 
 # Now you can run things like
 php composer.phar install 
@@ -39,7 +39,7 @@ php composer.phar install
 
 ## Running Codeception Tests
 
-Use `docker-compose run --rm` to launch a new backend container which will run the automated tests then destroy the container after it's done.
+Use `docker compose run --rm` to launch a new app container which will run the automated tests then destroy the container after it's done.
 
 We have a shortcut script in the project main folder you can use to run complete tests.
 
@@ -49,10 +49,10 @@ We have a shortcut script in the project main folder you can use to run complete
 ./run-tests.sh
 
 # What this is doing is calling
-docker-compose run --rm backend vendor/bin/codecept run --fail-fast --html report-web.html
+docker compose -f docker-compose-local.yml -p plugn-local-server run --rm app vendor/bin/codecept run --fail-fast --html report-web.html
 
 # You can also run this in the background by passing `-d` flag
-# to docker-compose and check the test results in the
+# to docker compose and check the test results in the
 # outputted report-web.html
 ```
 
@@ -62,20 +62,20 @@ docker-compose run --rm backend vendor/bin/codecept run --fail-fast --html repor
 
 ```bash
 # Connect to mysql container
-docker-compose exec mysql bash
+docker compose -f docker-compose-local.yml -p plugn-local-server exec mysql bash
 
 # Connect to db
-mysql -uroot -p12345
+mysql -uplugnuser -pplugn plugn
 ```
 
 
 ### Using Phpmyadmin
 
-Phpmyadmin is running on localhost port 8080.
+PhpMyAdmin is running on localhost port 8088.
 
-* [http://localhost:8080](http://localhost:8080)
-* Username: root
-* Password: 12345
+* [http://localhost:8088](http://localhost:8088)
+* Username: plugnuser
+* Password: plugn
 
 ## Configure Cron Commands using following intervals
 
@@ -287,11 +287,11 @@ https://api-docs.tabby.ai/
 
 # on reboot, don't forget to run this based on the environment you want to run
  
- - docker-compose -f docker-compose-prod.yml -p plugn-prod-server up -d
+ - docker compose -f docker-compose-prod.yml -p plugn-prod-server up -d
 
- - docker-compose -f docker-compose-dev.yml -p plugn-dev-server up -d
+ - docker compose -f docker-compose-dev.yml -p plugn-dev-server up -d
 
- - docker-compose -f docker-compose-local.yml -p plugn-local-server up -d
+ - docker compose -f docker-compose-local.yml -p plugn-local-server up -d
 
 # git tag 
 
@@ -337,7 +337,7 @@ http://localhost:8085
 ## remail 
 http://localhost:8086
 
-## shortner 
+## shortener
 http://localhost:8087
 
 # MySql requirement 
@@ -407,4 +407,4 @@ todo
 
 ## to install aws 
 
-- sudo snap install aws-cli --classic 
+- sudo snap install aws-cli --classic

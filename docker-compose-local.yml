@@ -10,7 +10,7 @@ services:
     image: mysql:8.4.3
     restart: always
     volumes:
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
       - mysql-data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=plugn
@@ -21,12 +21,19 @@ services:
     #  - "3306:3306"
     networks:
       - plugn-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   app:
     build: 
       context: .
       dockerfile: ./Dockerfile-nginx-local
     container_name: plugn-backend-local
+    restart: unless-stopped
     #command:
     #  - /bin/sh
     #  - -c
@@ -39,19 +46,21 @@ services:
     #    service nginx restart  && \
     #    tail -f /dev/null  # Keep container running
     ports:
-      - "8083:8083" #backend endpoint
-      - "8082:8082" #store endpoint
-      - "8081:8081" #vendor dashboard endpoint
-      - "8084:8084" #crm endpoint
-      - "8085:8085" #partner endpoint
-      - "8086:8086" #remail endpoint
-      - "8087:8087" #shortner endpoint
+      - "127.0.0.1:8083:8083" #backend endpoint
+      - "127.0.0.1:8082:8082" #store endpoint
+      - "127.0.0.1:8081:8081" #vendor dashboard endpoint
+      - "127.0.0.1:8084:8084" #crm endpoint
+      - "127.0.0.1:8085:8085" #partner endpoint
+      - "127.0.0.1:8086:8086" #remail endpoint
+      - "127.0.0.1:8087:8087" #shortener endpoint
     volumes:
       - .:/home/ubuntu/plugn
       #- ./nginx/basic.conf:/etc/nginx/sites-available/basic.conf
     depends_on:
-      - redis
-      - mysql
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - plugn-network
 
@@ -62,6 +71,11 @@ services:
  #     - "6379:6379"
     networks:
       - plugn-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
    # command:
    #   - redis-server --port 7777
     volumes:
@@ -69,19 +83,19 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
+    container_name: plugn-phpmyadmin-local
     environment:
       PMA_HOST: mysql
       PMA_USER: plugnuser
       PMA_PASSWORD: plugn
     ports:
-      - "8081:80"
+      - "127.0.0.1:8088:80"
     networks:
       - plugn-network
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
 volumes:
   redis-data:
   mysql-data: 
-
