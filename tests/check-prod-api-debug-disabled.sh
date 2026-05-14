@@ -34,6 +34,13 @@ for file in "${files[@]}"; do
     exit 1
   fi
 
-  grep -q "define('YII_DEBUG', false)" "$file"
-  grep -q "define('YII_ENV', 'prod')" "$file"
+  if ! grep -q "define('YII_DEBUG', false)" "$file"; then
+    echo "$file must explicitly disable YII_DEBUG in production." >&2
+    exit 1
+  fi
+
+  if ! grep -q "define('YII_ENV', 'prod')" "$file"; then
+    echo "$file must keep YII_ENV set to prod." >&2
+    exit 1
+  fi
 done
