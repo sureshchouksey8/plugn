@@ -35,3 +35,7 @@ for app in api frontend backend partner agent crm shortner remail; do
 done
 
 grep -q "PLUGN_COOKIE_VALIDATION_KEY" environments/prod/common/config/cookie-validation-key.php
+
+grep -q "PLUGN_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md
+grep -q "PLUGN_REMAIL_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md
+grep -q "tests/check-prod-cookie-validation-env.sh" PRODUCTION_READINESS.md
