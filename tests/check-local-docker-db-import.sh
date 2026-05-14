@@ -22,6 +22,11 @@ if ! grep -q "image: mysql:5.7.44" "$compose_file"; then
   exit 1
 fi
 
+if ! grep -q "platform: linux/amd64" "$compose_file"; then
+  echo "Local Docker MySQL must pin linux/amd64 because mysql:5.7.44 has no arm64 image." >&2
+  exit 1
+fi
+
 if grep -n "SET GLOBAL FOREIGN_KEY_CHECKS" "$dump_file"; then
   echo "The bundled MySQL dump must use session-level FOREIGN_KEY_CHECKS, not GLOBAL." >&2
   exit 1
