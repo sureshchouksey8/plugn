@@ -21,12 +21,18 @@ services:
     #  - "3306:3306"
     networks:
       - plugn-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pplugn"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   app:
     build: 
       context: .
       dockerfile: ./Dockerfile-nginx-local
     container_name: plugn-backend-local
+    restart: unless-stopped
     #command:
     #  - /bin/sh
     #  - -c
@@ -50,8 +56,10 @@ services:
       - .:/home/ubuntu/plugn
       #- ./nginx/basic.conf:/etc/nginx/sites-available/basic.conf
     depends_on:
-      - redis
-      - mysql
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - plugn-network
 
@@ -62,6 +70,11 @@ services:
  #     - "6379:6379"
     networks:
       - plugn-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
    # command:
    #   - redis-server --port 7777
     volumes:
@@ -75,7 +88,7 @@ services:
       PMA_USER: plugnuser
       PMA_PASSWORD: plugn
     ports:
-      - "8081:80"
+      - "8088:80"
     networks:
       - plugn-network
     depends_on:
@@ -84,4 +97,3 @@ services:
 volumes:
   redis-data:
   mysql-data: 
-
