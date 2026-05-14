@@ -1,6 +1,6 @@
 # Production readiness checks
 
-Production Yii apps require a non-empty cookie validation key before they boot. Set one shared key with `PLUGN_COOKIE_VALIDATION_KEY`, or set app-specific keys when each app should rotate independently:
+Production Yii apps in `prod`, `prod-docker`, and `prod-railway` require a non-empty cookie validation key before they boot. Set one shared key with `PLUGN_COOKIE_VALIDATION_KEY`, or set app-specific keys when each app should rotate independently:
 
 * `PLUGN_API_COOKIE_VALIDATION_KEY`
 * `PLUGN_FRONTEND_COOKIE_VALIDATION_KEY`

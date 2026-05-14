@@ -11,6 +11,30 @@ files=(
   environments/prod/shortner/config/main-local.php
   environments/prod/remail/config/main-local.php
   environments/prod/common/config/cookie-validation-key.php
+  environments/prod-docker/api/config/main-local.php
+  environments/prod-docker/frontend/config/main-local.php
+  environments/prod-docker/backend/config/main-local.php
+  environments/prod-docker/partner/config/main-local.php
+  environments/prod-docker/agent/config/main-local.php
+  environments/prod-docker/crm/config/main-local.php
+  environments/prod-docker/shortner/config/main-local.php
+  environments/prod-docker/remail/config/main-local.php
+  environments/prod-docker/common/config/cookie-validation-key.php
+  environments/prod-railway/api/config/main-local.php
+  environments/prod-railway/frontend/config/main-local.php
+  environments/prod-railway/backend/config/main-local.php
+  environments/prod-railway/partner/config/main-local.php
+  environments/prod-railway/agent/config/main-local.php
+  environments/prod-railway/crm/config/main-local.php
+  environments/prod-railway/shortner/config/main-local.php
+  environments/prod-railway/remail/config/main-local.php
+  environments/prod-railway/common/config/cookie-validation-key.php
+)
+
+helpers=(
+  environments/prod/common/config/cookie-validation-key.php
+  environments/prod-docker/common/config/cookie-validation-key.php
+  environments/prod-railway/common/config/cookie-validation-key.php
 )
 
 if command -v php >/dev/null 2>&1; then
@@ -28,13 +52,17 @@ fi
 
 for app in api frontend backend partner agent crm shortner remail; do
   variable="PLUGN_$(printf '%s' "$app" | tr '[:lower:]-' '[:upper:]_')_COOKIE_VALIDATION_KEY"
-  if ! grep -q "$variable" environments/prod/common/config/cookie-validation-key.php; then
-    echo "Missing $variable support in production cookie validation helper." >&2
-    exit 1
-  fi
+  for helper in "${helpers[@]}"; do
+    if ! grep -q "$variable" "$helper"; then
+      echo "Missing $variable support in $helper." >&2
+      exit 1
+    fi
+  done
 done
 
-grep -q "PLUGN_COOKIE_VALIDATION_KEY" environments/prod/common/config/cookie-validation-key.php
+for helper in "${helpers[@]}"; do
+  grep -q "PLUGN_COOKIE_VALIDATION_KEY" "$helper"
+done
 
 grep -q "PLUGN_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md
 grep -q "PLUGN_REMAIL_COOKIE_VALIDATION_KEY" PRODUCTION_READINESS.md
