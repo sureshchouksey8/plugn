@@ -8,6 +8,7 @@ services:
   
   mysql:
     image: mysql:5.7.44
+    platform: linux/amd64
     restart: always
     volumes:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
