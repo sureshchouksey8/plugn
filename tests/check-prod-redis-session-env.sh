@@ -16,7 +16,7 @@ else
   echo "php not found; skipping PHP lint and running static Redis config checks." >&2
 fi
 
-if grep -RInE "'password'[[:space:]]*=>[[:space:]]*['\"][^'$]" "${files[@]}"; then
+if grep -nE "['\"]password['\"][[:space:]]*=>[[:space:]]*['\"][^'\"]*['\"]" "${files[@]}"; then
   echo "prod-railway Redis password must not be a committed literal." >&2
   exit 1
 fi
