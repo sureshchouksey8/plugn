@@ -9,6 +9,7 @@ use common\models\Payment;
 use common\models\Setting;
 use yii\helpers\Url;
 use yii\rest\Controller;
+use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use api\modules\v2\controllers\BaseController;
 
@@ -325,8 +326,16 @@ class UpaymentController extends BaseController
 
         $response = $this->getStatus($order, $track_id);
 
-        if($response && $response['status'] != "1") {
-            echo "wrong track id?"; die();
+        if (!is_array($response) || !array_key_exists('status', $response) || $response['status'] != "1") {
+            Yii::warning([
+                'message' => 'Upayment callback rejected because gateway status validation failed.',
+                'order_uuid' => $order_uuid,
+                'track_id' => $track_id,
+                'gateway_status' => is_array($response) && array_key_exists('status', $response) ? $response['status'] : null,
+                'gateway_message' => is_array($response) && isset($response['message']) ? $response['message'] : null,
+            ], __METHOD__);
+
+            throw new BadRequestHttpException('Invalid payment callback status.');
         }
 
         //$refid = $this->request->get['ref'];

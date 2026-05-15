@@ -77,7 +77,7 @@ class Tabby extends Model
         ));
 
         if ($tid = $this->getTransactionIdByOrder($data['order_uuid'])) {
-            $this->updateTransaction($data);
+            return $this->updateTransaction($data);
         } else {
 
             $tt = new TabbyTransaction();
@@ -89,11 +89,20 @@ class Tabby extends Model
 
             if (!$tt->save()) {
                 TabbyTransaction::ddlog('error', 'addTransaction', null, $tt->errors);
-                echo "<pre />";
-                print_r($tt->errors);
-                die();
+                Yii::error([
+                    'message' => 'Unable to create Tabby transaction.',
+                    'order_uuid' => $data['order_uuid'],
+                    'transaction_id' => $data['transaction_id'],
+                    'errors' => $tt->errors,
+                ], __METHOD__);
+
+                $this->addError('transaction', 'Unable to create Tabby transaction.');
+
+                return false;
             }
         }
+
+        return true;
     }
 
     public function updateTransaction($data) {
@@ -132,15 +141,23 @@ class Tabby extends Model
 
         if (!$tt->save()) {
             TabbyTransaction::ddlog('error', 'addTransaction', null, $tt->errors);
-            echo "<pre />";
-            print_r($tt->errors);
-            die();
+            Yii::error([
+                'message' => 'Unable to update Tabby transaction.',
+                'order_uuid' => $data['order_uuid'],
+                'transaction_id' => $data['transaction_id'],
+                'errors' => $tt->errors,
+            ], __METHOD__);
+
+            $this->addError('transaction', 'Unable to update Tabby transaction.');
+
+            return false;
         }
 
         //} else {
         //$sql = "UPDATE `" . DB_PREFIX . "tabby_transaction` SET update_date = now(), body = '" . $this->db->escape($data['body']) . "', status = '" . $this->db->escape($data['status']) . "' WHERE order_uuid = '" . (int)$data['order_uuid'] . "' AND (status = 'captured' OR status = 'closed' OR status = 'refunded')";
         //}
 
+        return true;
     }
 
     protected function getMerchantCode($order) {

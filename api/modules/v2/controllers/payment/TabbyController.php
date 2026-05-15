@@ -114,13 +114,15 @@ class TabbyController extends BaseController
                 $json['error'] = "Transaction amount or currency issue.";
             } else {
                 // assign transaction to order
-                $tabby->addTransaction([
+                if (!$tabby->addTransaction([
                     'order_uuid'          => $order_uuid,
                     'transaction_id'    => $payment_id,
                     'body'              => json_encode($res),
                     'status'            => strtolower($res->status),
                     'source'            => 'checkout'
-                ]);
+                ])) {
+                    $json['error'] = 'Unable to persist Tabby transaction.';
+                }
 
             }
 
@@ -260,12 +262,22 @@ class TabbyController extends BaseController
 
                     if ($transaction_status == 'created') {
 
-                        $tabby->updateTransaction([
+                        if (!$tabby->updateTransaction([
                             'order_uuid' => $order_uuid,
                             'body'     => json_encode($res),
                             'status'   => 'authorized',
                             'source'   => 'checkout'
-                        ]);
+                        ])) {
+                            Yii::error([
+                                'message' => 'Unable to update Tabby transaction after checkout authorization.',
+                                'order_uuid' => $order_uuid,
+                                'payment_id' => $payment_id,
+                            ], __METHOD__);
+
+                            $json['error'] = 'Unable to persist Tabby transaction.';
+
+                            return $json;
+                        }
                     }
 
                     // capture only authorized payments
@@ -383,9 +395,6 @@ class TabbyController extends BaseController
                             $payment_tabby_order_status = Order::STATUS_PENDING;
                         }
 
-                        OrderHistory::addOrderHistory($order->order_uuid, $payment_tabby_order_status,
-                            sprintf("Authorization webhook #%s. Amount %s %s", $transaction_id, $amount, $currency));
-
                         // assign transaction to order
                         $tt = new TabbyTransaction();
                         $tt->order_uuid = $order_uuid;
@@ -403,9 +412,15 @@ class TabbyController extends BaseController
                                 "status"         => $status,
                                 "source"         => 'webhook',
                             ]);
-                            print_r($tt->errors);
-                            die();
+                            Yii::$app->response->statusCode = 500;
+                            return [
+                                'success' => false,
+                                'message' => 'Unable to persist Tabby webhook transaction.',
+                            ];
                         }
+
+                        OrderHistory::addOrderHistory($order->order_uuid, $payment_tabby_order_status,
+                            sprintf("Authorization webhook #%s. Amount %s %s", $transaction_id, $amount, $currency));
 
                         //$this->clear_customer_session($order['customer_id'], $sid->sid);
                     }
