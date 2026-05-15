@@ -13,7 +13,7 @@ tabby_model="common/models/Tabby.php"
 grep -q "BadRequestHttpException('Invalid payment callback status.')" "$upayment_controller" \
   || fail "Upayment invalid callback status must be rejected through Yii exception handling"
 
-grep -Fq '!is_array($response)' "$upayment_controller" \
+grep -Fq 'empty($response) || !isset($response' "$upayment_controller" \
   || fail "Upayment callback must reject empty or malformed gateway responses"
 
 if grep -Fq 'wrong track id?' "$upayment_controller" \
@@ -27,6 +27,15 @@ grep -q "Unable to persist Tabby webhook transaction" "$tabby_controller" \
 
 grep -Fq 'return $json;' "$tabby_controller" \
   || fail "Tabby checkout persistence failures must stop before capture"
+
+grep -Fq '$dbTransaction = Yii::$app->db->beginTransaction();' "$tabby_controller" \
+  || fail "Tabby webhook callback must wrap persistence in a database transaction"
+
+grep -Fq '$dbTransaction->commit();' "$tabby_controller" \
+  || fail "Tabby webhook callback must commit transaction and order history together"
+
+grep -Fq '$dbTransaction->rollBack();' "$tabby_controller" \
+  || fail "Tabby webhook callback must roll back persistence failures"
 
 if grep -Fq 'print_r($tt->errors)' "$tabby_controller" \
   || grep -Fq 'die();' "$tabby_controller"; then

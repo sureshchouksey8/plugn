@@ -326,12 +326,12 @@ class UpaymentController extends BaseController
 
         $response = $this->getStatus($order, $track_id);
 
-        if (!is_array($response) || !array_key_exists('status', $response) || $response['status'] != "1") {
+        if (empty($response) || !isset($response['status']) || (string)$response['status'] !== '1') {
             Yii::warning([
                 'message' => 'Upayment callback rejected because gateway status validation failed.',
                 'order_uuid' => $order_uuid,
                 'track_id' => $track_id,
-                'gateway_status' => is_array($response) && array_key_exists('status', $response) ? $response['status'] : null,
+                'gateway_status' => is_array($response) && isset($response['status']) ? $response['status'] : null,
                 'gateway_message' => is_array($response) && isset($response['message']) ? $response['message'] : null,
             ], __METHOD__);
 
