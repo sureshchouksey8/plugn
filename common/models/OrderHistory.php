@@ -132,8 +132,7 @@ class OrderHistory extends \yii\db\ActiveRecord
         $order->order_status = $status;
         if (!$order->save()) {
             Yii::error($order->errors);
-            print_r($order->errors);
-            die();
+            throw new \RuntimeException('Unable to update order status while adding order history.');
         }
 
         $model = new OrderHistory();
@@ -142,8 +141,7 @@ class OrderHistory extends \yii\db\ActiveRecord
         $model->comment = $note;
         if (!$model->save()) {
             Yii::error($model->errors);
-            print_r($model->errors);
-            die();
+            throw new \RuntimeException('Unable to save order history.');
         }
     }
 

@@ -9,6 +9,7 @@ fail() {
 upayment_controller="api/modules/v2/controllers/payment/UpaymentController.php"
 tabby_controller="api/modules/v2/controllers/payment/TabbyController.php"
 tabby_model="common/models/Tabby.php"
+order_history_model="common/models/OrderHistory.php"
 
 grep -q "BadRequestHttpException('Invalid payment callback status.')" "$upayment_controller" \
   || fail "Upayment invalid callback status must be rejected through Yii exception handling"
@@ -47,6 +48,20 @@ grep -Fq '$dbTransaction->commit();' "$tabby_controller" \
 
 grep -Fq '$dbTransaction->rollBack();' "$tabby_controller" \
   || fail "Tabby webhook callback must roll back persistence failures"
+
+grep -Fq "throw new \\RuntimeException('Unable to update order status while adding order history.')" "$order_history_model" \
+  || fail "OrderHistory status update failures must throw into caller transaction handling"
+
+grep -Fq "throw new \\RuntimeException('Unable to save order history.')" "$order_history_model" \
+  || fail "OrderHistory save failures must throw into caller transaction handling"
+
+if awk '/public static function addOrderHistory/,/^    }/' "$order_history_model" | grep -Fq 'print_r'; then
+  fail "OrderHistory::addOrderHistory must not print inside transaction callers"
+fi
+
+if awk '/public static function addOrderHistory/,/^    }/' "$order_history_model" | grep -Fq 'die('; then
+  fail "OrderHistory::addOrderHistory must not print/die inside transaction callers"
+fi
 
 if grep -Fq 'print_r($tt->errors)' "$tabby_controller" \
   || grep -Fq 'die();' "$tabby_controller"; then
