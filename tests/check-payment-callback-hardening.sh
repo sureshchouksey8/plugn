@@ -25,8 +25,19 @@ fi
 grep -q "Unable to persist Tabby webhook transaction" "$tabby_controller" \
   || fail "Tabby webhook save failures must return a structured error response"
 
-grep -Fq 'return $json;' "$tabby_controller" \
-  || fail "Tabby checkout persistence failures must stop before capture"
+grep -Fq '$tabbyTransactionPersisted = false;' "$tabby_controller" \
+  || fail "Tabby checkout persistence failures must mark the local transaction as unpersisted"
+
+awk '
+  /Unable to update Tabby transaction after checkout authorization/ { in_failure = 1 }
+  in_failure && /return \$json;/ { found_return = 1 }
+  in_failure && /OrderHistory::addOrderHistory/ { reached_history = 1; exit }
+  END { exit (in_failure && reached_history && !found_return ? 0 : 1) }
+' "$tabby_controller" \
+  || fail "Tabby checkout persistence failures must continue into the existing redirect flow without adding order history first"
+
+grep -Fq 'if ($tabbyTransactionPersisted) {' "$tabby_controller" \
+  || fail "Tabby checkout order history and capture must be gated on transaction persistence"
 
 grep -Fq '$dbTransaction = Yii::$app->db->beginTransaction();' "$tabby_controller" \
   || fail "Tabby webhook callback must wrap persistence in a database transaction"
@@ -42,8 +53,25 @@ if grep -Fq 'print_r($tt->errors)' "$tabby_controller" \
   fail "Tabby webhook callback must not print/die on transaction persistence errors"
 fi
 
-grep -q "return false;" "$tabby_model" \
-  || fail "Tabby transaction persistence failures must return false"
+awk '
+  /Unable to create Tabby transaction\./ { in_create_failure = 1; lines = 0 }
+  in_create_failure {
+    if (/return false;/) { found = 1; exit }
+    if (lines++ > 12) { exit }
+  }
+  END { exit found ? 0 : 1 }
+' "$tabby_model" \
+  || fail "Tabby create transaction persistence failures must return false"
+
+awk '
+  /Unable to update Tabby transaction\./ { in_update_failure = 1; lines = 0 }
+  in_update_failure {
+    if (/return false;/) { found = 1; exit }
+    if (lines++ > 12) { exit }
+  }
+  END { exit found ? 0 : 1 }
+' "$tabby_model" \
+  || fail "Tabby update transaction persistence failures must return false"
 
 if grep -Fq 'echo "<pre' "$tabby_model" \
   || grep -Fq 'print_r($tt->errors)' "$tabby_model" \

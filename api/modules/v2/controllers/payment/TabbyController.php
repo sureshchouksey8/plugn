@@ -255,6 +255,7 @@ class TabbyController extends BaseController
                     }
 
                     // assign transaction to order
+                    $tabbyTransactionPersisted = true;
                     $transaction_status = $tabby->getTransactionStatus($payment_id);
 
                     if ($transaction_status == 'created') {
@@ -272,26 +273,27 @@ class TabbyController extends BaseController
                             ], __METHOD__);
 
                             $json['error'] = 'Unable to persist Tabby transaction.';
-
-                            return $json;
+                            $tabbyTransactionPersisted = false;
                         }
                     }
 
-                    OrderHistory::addOrderHistory($order->order_uuid, $payment_tabby_order_status,
-                        sprintf("Authorization transaction #%s. Amount %s %s", $payment_id, $res->amount, $res->currency));
+                    if ($tabbyTransactionPersisted) {
+                        OrderHistory::addOrderHistory($order->order_uuid, $payment_tabby_order_status,
+                            sprintf("Authorization transaction #%s. Amount %s %s", $payment_id, $res->amount, $res->currency));
 
-                    // capture only authorized payments
-                    if (
-                        $payment_tabby_capture_on == "order_placed" &&
-                        $res->status == 'AUTHORIZED'
-                    ) {
-                        $capture_exec = $tabby->capture($payment_id, $res->amount, $order->restaurant_uuid);
-
+                        // capture only authorized payments
                         if (
-                            array_key_exists('error', $capture_exec) &&
-                            !empty($capture_exec['error'])
+                            $payment_tabby_capture_on == "order_placed" &&
+                            $res->status == 'AUTHORIZED'
                         ) {
-                            $json['error'] = $capture_exec['error'];
+                            $capture_exec = $tabby->capture($payment_id, $res->amount, $order->restaurant_uuid);
+
+                            if (
+                                array_key_exists('error', $capture_exec) &&
+                                !empty($capture_exec['error'])
+                            ) {
+                                $json['error'] = $capture_exec['error'];
+                            }
                         }
                     }
                 }
