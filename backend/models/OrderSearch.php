@@ -16,6 +16,7 @@ class OrderSearch extends Order
     public $date_start;
     public $date_end;
     public $type;
+    private const NUMERIC_FILTER_PATTERN = '/^\s*(<=|>=|<|>|=)?\s*([0-9]+(?:\.[0-9]+)?)\s*$/';
 
     /**
      * {@inheritdoc}
@@ -91,13 +92,7 @@ class OrderSearch extends Order
         ]);
 
         if ($this->total_price) {
-            if(str_contains($this->total_price, ">") || str_contains($this->total_price, "<")) {
-                $query->andWhere(new Expression("total_price " . $this->total_price));
-            } else if(str_contains($this->total_price, "=")) {
-                $query->andWhere(["total_price" => str_replace(["=", " "], ["",""], $this->total_price)]);
-            } else {
-                $query->andWhere(["total_price" => $this->total_price]);
-            }
+            $this->applyNumericFilter($query, 'total_price', $this->total_price);
         }
 
         $query->andFilterWhere(['like', 'area_name', $this->area_name])
@@ -116,5 +111,16 @@ class OrderSearch extends Order
             ->orderBy('order_created_at DESC');
 
         return $dataProvider;
+    }
+
+    private function applyNumericFilter($query, $column, $value)
+    {
+        if (!preg_match(self::NUMERIC_FILTER_PATTERN, (string)$value, $matches)) {
+            $query->andWhere('0=1');
+            return;
+        }
+
+        $operator = $matches[1] ?: '=';
+        $query->andWhere([$operator, $column, $matches[2]]);
     }
 }

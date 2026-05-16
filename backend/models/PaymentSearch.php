@@ -90,11 +90,15 @@ class PaymentSearch extends Payment
         ]);
 
         if($this->date_from) {
-            $query->andWhere(new Expression("DATE(payment_created_at) >= DATE('".$this->date_from."')"));
+            $query->andWhere(new Expression('DATE(payment_created_at) >= DATE(:date_from)', [
+                ':date_from' => $this->date_from,
+            ]));
         }
 
         if($this->date_to) {
-            $query->andWhere(new Expression("DATE(payment_created_at) <= DATE('".$this->date_to."')"));
+            $query->andWhere(new Expression('DATE(payment_created_at) <= DATE(:date_to)', [
+                ':date_to' => $this->date_to,
+            ]));
         }
 
         $query->andFilterWhere(['like', 'payment_uuid', $this->payment_uuid])
