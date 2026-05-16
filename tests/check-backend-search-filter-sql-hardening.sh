@@ -12,6 +12,8 @@ grep -q "':date_to' => \$this->date_to" "$payment_search"
 
 grep -q "NUMERIC_FILTER_PATTERN" "$order_search"
 grep -q "NUMERIC_FILTER_PATTERN" "$restaurant_search"
+grep -q "\$this->total_price !== null && \$this->total_price !== ''" "$order_search"
+grep -q "\$this->total_orders !== null && \$this->total_orders !== ''" "$restaurant_search"
 grep -q "applyNumericFilter(\$query, 'total_price', \$this->total_price)" "$order_search"
 grep -q "applyNumericFilter(\$query, 'total_orders', \$this->total_orders)" "$restaurant_search"
 grep -q "\$query->andWhere('0=1')" "$order_search"
@@ -22,7 +24,7 @@ if grep -n 'DATE(payment_created_at).*\\.\\$this->date_' "$payment_search"; then
   exit 1
 fi
 
-if grep -n 'new Expression("total_price " \\.\\|new Expression("total_orders " \\.' "$order_search" "$restaurant_search"; then
+if grep -En 'new Expression\("total_(price|orders) " \.' "$order_search" "$restaurant_search"; then
   echo "Backend numeric search filters must not concatenate request values into SQL expressions." >&2
   exit 1
 fi

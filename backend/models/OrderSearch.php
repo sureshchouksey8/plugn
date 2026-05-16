@@ -91,7 +91,7 @@ class OrderSearch extends Order
             'order_status' => $this->order_status,
         ]);
 
-        if ($this->total_price) {
+        if ($this->total_price !== null && $this->total_price !== '') {
             $this->applyNumericFilter($query, 'total_price', $this->total_price);
         }
 

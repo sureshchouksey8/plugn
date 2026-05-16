@@ -298,7 +298,7 @@ class RestaurantSearch extends Restaurant
             //->andFilterWhere(['like', 'total_orders', $this->total_orders])
             ->andFilterWhere(['like', 'restaurant.name_ar', $this->name_ar]);
 
-        if ($this->total_orders) {
+        if ($this->total_orders !== null && $this->total_orders !== '') {
             $this->applyNumericFilter($query, 'total_orders', $this->total_orders);
         }
 
