@@ -8,8 +8,8 @@ if grep -n 'wrong track id' "$target"; then
   exit 1
 fi
 
-if grep -n 'echo "wrong track id' "$target" || grep -n 'die();' "$target"; then
-  echo "UPayment callback must not terminate with raw echo/die paths." >&2
+if grep -n 'die();' "$target"; then
+  echo "UPayment callback must not terminate with die() paths." >&2
   exit 1
 fi
 
