@@ -79,7 +79,6 @@ return [
         'ipstack' => [
             'class' => 'common\components\Ipstack',
             'accessKey' => $env('IPSTACK_ACCESS_KEY')
-            //fac3c2117d877e078e3e8fa7839d8204
         ],
         'reCaptcha' => [
             'class' => 'common\components\ReCaptcha',

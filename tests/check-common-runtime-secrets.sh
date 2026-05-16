@@ -43,6 +43,7 @@ blocked_patterns=(
   "SH2PbVs"
   "911bdd76f42e7f"
   "6LcEKx8p"
+  "fac3c2117d877e078e3e8fa7839d8204"
 )
 
 for pattern in "${blocked_patterns[@]}"; do
