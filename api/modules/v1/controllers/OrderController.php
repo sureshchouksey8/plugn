@@ -159,8 +159,9 @@ class OrderController extends BaseController {
                 }
             }
 
-
-            $response = [];
+            $response = null;
+            $orderAssemblyCommitted = false;
+            $transaction = Yii::$app->db->beginTransaction();
 
             if ($order->save()) {
 
@@ -207,6 +208,7 @@ class OrderController extends BaseController {
                                                 'operation' => 'error',
                                                 'message' => $orderItemExtraOption->errors,
                                             ];
+                                            break 2;
                                         }
                                     }
                                 }
@@ -217,6 +219,7 @@ class OrderController extends BaseController {
                                 'operation' => 'error',
                                 'message' => $orderItem->getErrors()
                             ];
+                            break;
                         }
                     }
                 } else {
@@ -243,13 +246,13 @@ class OrderController extends BaseController {
             if ($response == null) {
 
               if (!$order->updateOrderTotalPrice()) {
-                  return [
+                  $response = [
                       'operation' => 'error',
                       'message' => $order->getErrors()
                   ];
               }
 
-                if ($order->order_mode == Order::ORDER_MODE_DELIVERY && $order->subtotal < $order->restaurantDelivery->min_charge) {
+                if ($response == null && $order->order_mode == Order::ORDER_MODE_DELIVERY && $order->subtotal < $order->restaurantDelivery->min_charge) {
                     $response = [
                         'operation' => 'error',
                         'message' => 'Minimum order amount ' . Yii::$app->formatter->asCurrency(
@@ -260,6 +263,12 @@ class OrderController extends BaseController {
                     ];
                 }
 
+                if ($response == null) {
+                    $transaction->commit();
+                    $orderAssemblyCommitted = true;
+                } else {
+                    $transaction->rollBack();
+                }
 
                 //if payment method not cash redirect customer to payment gateway
 
@@ -488,8 +497,11 @@ class OrderController extends BaseController {
                 }
             }
 
+            if (!$orderAssemblyCommitted && $transaction->getIsActive()) {
+                $transaction->rollBack();
+            }
 
-            if (array_key_exists('operation', $response) && $response['operation'] == 'error') {
+            if ($orderAssemblyCommitted && is_array($response) && array_key_exists('operation', $response) && $response['operation'] == 'error') {
                 $order->delete();
             }
         } else {
@@ -501,7 +513,9 @@ class OrderController extends BaseController {
 
         //for https://pogi.sentry.io/issues/3889482226/?project=5220572&query=is%3Aunresolved&referrer=issue-stream&stream_index=0
 
-        $restaurant->updateStats();
+        if ($restaurant) {
+            $restaurant->updateStats();
+        }
         
         return $response;
     }
