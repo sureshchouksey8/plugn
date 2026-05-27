@@ -19,8 +19,15 @@ if grep -q 'die();' <<<"$callback_block"; then
   exit 1
 fi
 
-grep -q 'UPayment callback rejected because the gateway status lookup did not validate the track id' <<<"$callback_block"
-grep -q "payment-failed" <<<"$callback_block"
+if ! grep -q 'UPayment callback rejected because the gateway status lookup did not validate the track id' <<<"$callback_block"; then
+  echo "UPayment callback must log the structured gateway rejection warning." >&2
+  exit 1
+fi
+
+if ! grep -q "payment-failed" <<<"$callback_block"; then
+  echo "UPayment callback must redirect rejected callbacks to the payment-failed flow." >&2
+  exit 1
+fi
 
 if ! grep -Fq 'is_array($response)' <<<"$callback_block"; then
   echo "UPayment callback must reject non-array gateway responses." >&2
@@ -32,5 +39,12 @@ if ! grep -Fq '$gatewayStatus !== "1"' <<<"$callback_block"; then
   exit 1
 fi
 
-grep -Fq "'gateway_status' => \$gatewayStatus" <<<"$callback_block"
-grep -Fq "'gateway_message' => \$gatewayMessage" <<<"$callback_block"
+if ! grep -Fq "'gateway_status' => \$gatewayStatus" <<<"$callback_block"; then
+  echo "UPayment callback must log gateway_status in the rejection warning." >&2
+  exit 1
+fi
+
+if ! grep -Fq "'gateway_message' => \$gatewayMessage" <<<"$callback_block"; then
+  echo "UPayment callback must log gateway_message in the rejection warning." >&2
+  exit 1
+fi
