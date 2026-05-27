@@ -325,13 +325,16 @@ class UpaymentController extends BaseController
 
         $response = $this->getStatus($order, $track_id);
 
-        if (($response['status'] ?? null) !== "1") {
+        $gatewayStatus = is_array($response) ? ($response['status'] ?? null) : null;
+        $gatewayMessage = is_array($response) ? ($response['message'] ?? null) : null;
+
+        if ($gatewayStatus !== "1") {
             Yii::warning([
                 'message' => 'UPayment callback rejected because the gateway status lookup did not validate the track id.',
                 'order_uuid' => $order_uuid,
                 'track_id' => $track_id,
-                'gateway_status' => $response['status'] ?? null,
-                'gateway_message' => $response['message'] ?? null,
+                'gateway_status' => $gatewayStatus,
+                'gateway_message' => $gatewayMessage,
             ], __METHOD__);
 
             return Yii::$app->getResponse()

@@ -22,10 +22,15 @@ fi
 grep -q 'UPayment callback rejected because the gateway status lookup did not validate the track id' <<<"$callback_block"
 grep -q "payment-failed" <<<"$callback_block"
 
-if ! grep -Fq '($response['\''status'\''] ?? null) !== "1"' <<<"$callback_block"; then
-  echo "UPayment callback must fail closed when gateway status is empty or malformed." >&2
+if ! grep -Fq 'is_array($response)' <<<"$callback_block"; then
+  echo "UPayment callback must reject non-array gateway responses." >&2
   exit 1
 fi
 
-grep -Fq "'gateway_status' => \$response['status'] ?? null" <<<"$callback_block"
+if ! grep -Fq '$gatewayStatus !== "1"' <<<"$callback_block"; then
+  echo "UPayment callback must fail closed when gateway status is missing, empty, or invalid." >&2
+  exit 1
+fi
 
+grep -Fq "'gateway_status' => \$gatewayStatus" <<<"$callback_block"
+grep -Fq "'gateway_message' => \$gatewayMessage" <<<"$callback_block"
