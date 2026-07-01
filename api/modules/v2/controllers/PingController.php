@@ -62,10 +62,17 @@ class PingController extends Controller
      */
     public function actionTest()
     {
-        //todo: check if all up or notify admin + tech team
+        $dbStatus = 'down';
+        try {
+            Yii::$app->db->open();
+            $dbStatus = 'up';
+        } catch (\Exception $e) {
+            \Yii::error("DB Connection Failed: " . $e->getMessage());
+        }
 
         return [
-            "operation" => "success"
+            "operation" => "success",
+            "db" => $dbStatus
         ];
     }
 }

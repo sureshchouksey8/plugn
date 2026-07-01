@@ -80,35 +80,46 @@ Phpmyadmin is running on localhost port 8080.
 ## Configure Cron Commands using following intervals
 
 ```bash
-# Every  minute
-* * * * * php ~/www/yii cron/site-status > /dev/null 2>&1
-* * * * * php ~/www/yii cron/create-payment-gateway-account > /dev/null 2>&1
+# Weekly stats report every start of week
+0 0 * * SUN /usr/local/bin/php ~/www/yii cron/weekly-report > /dev/null 2>&1
+
+# Retention emails
+0 0 * * * /usr/local/bin/php ~/www/yii cron/retention-emails-who-passed-five-days-and-no-sales  > /dev/null 2>&1
+0 0 * * * /usr/local/bin/php ~/www/yii cron/retention-emails-who-passed-two-days-and-no-products > /dev/null 2>&1
+
+# Subscription status updates
+0 0 * * * /usr/local/bin/php ~/www/yii cron/notify-agents-for-subscription-that-will-expire-soon > /dev/null 2>&1
+0 0 * * * /usr/local/bin/php ~/www/yii cron/downgraded-store-subscription > /dev/null 2>&1
+
+# Check site status every minute
+* * * * * /usr/local/bin/php ~/www/yii cron/site-status > /dev/null 2>&1
+
+# Update transactions Every 5 minutes
+*/5 * * * * /usr/local/bin/php ~/www/yii cron/update-transactions > /dev/null 2>&1
 
 # Every 5 minutes
-*/5 * * * * php ~/www/yii cron/update-transactions > /dev/null 2>&1
-*/5 * * * * php ~/www/yii cron/update-stock-qty > /dev/null 2>&1
-*/5 * * * * php ~/www/yii cron/send-reminder-email  > /dev/null 2>&1
-*/5 * * * * php ~/www/yii cron/make-refund  > /dev/null 2>&1
-*/5 * * * * php ~/www/yii cron/update-refund-status-message  > /dev/null 2>&1
-
-# Every day at midnight
-0 0 * * * php ~/www/yii  cron/update-voucher-status > /dev/null 2>&1
-0 0 * * * php ~/www/yii  cron/update-sitemap  > /dev/null 2>&1
-0 0 * * * php ~/www/yii  cron/retention-emails-who-passed-five-days-and-no-sales  > /dev/null 2>&1
-0 0 * * * php ~/www/yii  cron/retention-emails-who-passed-two-days-and-no-products > /dev/null 2>&1
-0 0 * * * php ~/www/yii  cron/notify-agents-for-subscription-that-will-expire-soon > /dev/null 2>&1
-0 0 * * * php ~/www/yii  cron/downgraded-store-subscription    > /dev/null 2>&1
+*/5 * * * * /usr/local/bin/php ~/www/yii cron/send-reminder-email  > /dev/null 2>&1
 
 # Build every 10 sec
-* * * * * php ~/www/yii  cron/update-voucher-status > /dev/null 2>&1
-* * * * * sleep 10 && php ~/www/yii  cron/create-build-js-file > /dev/null 2>&1
-* * * * * sleep 20 && php ~/www/yii  cron/create-build-js-file > /dev/null 2>&1
-* * * * * sleep 30 && php ~/www/yii  cron/create-build-js-file > /dev/null 2>&1
-* * * * * sleep 40 && php ~/www/yii  cron/create-build-js-file > /dev/null 2>&1
-* * * * * sleep 50 && php ~/www/yii  cron/create-build-js-file > /dev/null 2>&1
+* * * * * /usr/local/bin/php ~/www/yii cron/create-build-js-file > /dev/null 2>&1
+* * * * * sleep 10 && /usr/local/bin/php ~/www/yii cron/create-build-js-file > /dev/null 2>&1
+* * * * * sleep 20 && /usr/local/bin/php ~/www/yii cron/create-build-js-file > /dev/null 2>&1
+* * * * * sleep 30 && /usr/local/bin/php ~/www/yii cron/create-build-js-file > /dev/null 2>&1
+* * * * * sleep 40 && /usr/local/bin/php ~/www/yii cron/create-build-js-file > /dev/null 2>&1
+* * * * * sleep 50 && /usr/local/bin/php ~/www/yii cron/create-build-js-file > /dev/null 2>&1
 
-# Every Sunday
-0 0 * * SAT php ~/www/yii cron/weekly-report  > /dev/null 2>&1
+# Every day at midnight
+0 0 * * * /usr/local/bin/php ~/www/yii cron/update-voucher-status > /dev/null 2>&1
+
+* * * * * /usr/local/bin/php ~/www/yii cron/create-payment-gateway-account > /dev/null 2>&1
+*/5 * * * * /usr/local/bin/php ~/www/yii cron/update-refund-status-message  > /dev/null 2>&1
+*/5 * * * * /usr/local/bin/php ~/www/yii cron/make-refund  > /dev/null 2>&1
+
+# Run Cron Commands Once A Day
+30 13 * * * /usr/local/bin/php ~/www/yii cron/daily > /dev/null 2>&1
+
+# Run Cron commands every minute
+* * * * * /usr/local/bin/php ~/www/yii cron/minute > /dev/null 2>&1
 ```
 
 ## Database schema 
@@ -186,7 +197,6 @@ https://medium.com/product-analytics-academy/dealing-with-bad-data-accidentally-
 
 Todo
 ------------------
-update cron > crontab
 
 https://blog.logrocket.com/how-to-run-laravel-docker-compose-ubuntu-v22-04/
 
